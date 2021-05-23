@@ -14,7 +14,7 @@ jobs:
       - name: Run Pylint
         run: echo SOON
       - name: Run Tests
-        run: pytest tests
+        run: PYTHONPATH=. pytest tests
 
   deploy:
     runs-on: ubuntu-latest
