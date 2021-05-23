@@ -4,7 +4,8 @@ WORKDIR /build
 COPY requirements.txt .
 COPY requirements/ requirements/
 
-RUN pip install --user -r requirements.txt
+ARG REQUEREMENTS="requirements/prod.txt"
+RUN pip install --user -r ${REQUEREMENTS}
 
 FROM python:3.9-slim
 

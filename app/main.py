@@ -2,17 +2,20 @@ import logging
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi_jwt_auth import AuthJWT
+from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
-
+from pymongo.collection import Collection
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from app.db import get_user_collection
+from app.encrypt import hash_password
 from app.schemas import LoginRequest
-from fastapi_jwt_auth import AuthJWT
-from fastapi_jwt_auth.exceptions import AuthJWTException
 
 logging.basicConfig(level='DEBUG')
+
+users: Collection = get_user_collection()
 
 app = FastAPI()
 
@@ -20,7 +23,7 @@ origins = [
     "http://2read.online",
     "https://2read.online",
     "http://localhost",
-    "http://localhost:3000",
+    "http://localhost:3000"
 ]
 
 app.add_middleware(
@@ -51,8 +54,10 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 @app.put("/auth/login")
 def login(req: LoginRequest, authorize: AuthJWT = Depends()):
-    if req.email != "test" or req.password != "test":
+    user_db = users.find_one({'email': req.email})
+    if user_db is None or user_db['hashed_password'] != hash_password(req.password):
         raise HTTPException(status_code=401, detail="Bad email or password")
+
     access_token = authorize.create_access_token(subject=req.email)
     return {"access_token": access_token}
 
