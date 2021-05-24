@@ -15,7 +15,7 @@ class RegisterRequest(BaseModel):
     password_confirmation: str = Field(description="Password confirmation", min_length=6)
 
     @validator('password_confirmation')
-    def passwords_match(cls, v, values, **_kwargs):  # pylint: disable=no-self-argument,no-self-use
+    def passwords_match(cls, v, values, **kwargs):  # pylint: disable=no-self-argument,no-self-use,unused-argument
         """
         Check if password_confirmation and password match
         :param v:
