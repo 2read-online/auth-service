@@ -9,9 +9,9 @@ from pymongo.collection import Collection
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from app.db import get_user_collection
+from app.db import get_user_collection, User
 from app.encrypt import hash_password
-from app.schemas import LoginRequest
+from app.schemas import LoginRequest, RegisterRequest
 
 logging.basicConfig(level='DEBUG')
 
@@ -54,12 +54,23 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 @app.put("/auth/login")
 def login(req: LoginRequest, authorize: AuthJWT = Depends()):
-    user_db = users.find_one({'email': req.email})
-    if user_db is None or user_db['hashed_password'] != hash_password(req.password):
+    user_db = User.from_db(users.find_one({'email': req.email}))
+    if user_db is None or user_db.hashed_password != hash_password(req.password):
         raise HTTPException(status_code=401, detail="Bad email or password")
 
     access_token = authorize.create_access_token(subject=req.email)
     return {"access_token": access_token}
+
+
+@app.put("/auth/register")
+def register(req: RegisterRequest):
+    user_db = users.find_one({'email': req.email})
+    if user_db is not None:
+        raise HTTPException(status_code=409, detail="User already exists")
+
+    user_db = User(email=req.email, hashed_password=hash_password(req.password))
+    users.insert_one(user_db.dict(exclude_none=True))
+    return {}
 
 
 @app.get('/auth/logout')
