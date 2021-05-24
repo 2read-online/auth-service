@@ -10,11 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install modules
-        run: pip install -r requirements.txt
-      - name: Run Pylint
-        run: echo SOON
+        run: pip install -r requirements/test.txt
+      - name: Lint app
+        run: pylint ./app
+      - name: Lint tests
+        run: pylint ./tests
       - name: Run Tests
-        run: echo SOON
+        run: PYTHONPATH=. pytest tests
 
   deploy:
     runs-on: ubuntu-latest
