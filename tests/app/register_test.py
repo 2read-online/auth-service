@@ -1,3 +1,5 @@
+# pylint: disable=redefined-outer-name
+"""Test register processing"""
 import json
 
 import pytest
@@ -9,10 +11,13 @@ from tests.app.conftest import users
 
 @pytest.fixture
 def valid_request():
-    return RegisterRequest(email='test@test.com', password='password12', password_confirmation='password12').json()
+    """Valid request"""
+    return RegisterRequest(email='test@test.com', password='password12',
+                           password_confirmation='password12').json()
 
 
 def test__register_ok(client, valid_request):
+    """Should register a user with valid data"""
     users.find_one.return_value = None
 
     resp = client.put('/auth/register', valid_request)
@@ -24,6 +29,7 @@ def test__register_ok(client, valid_request):
 
 
 def test__user_exists(client, valid_request):
+    """Should return 409 if user already exists"""
     users.find_one.return_value = {}
     resp = client.put('/auth/register', valid_request)
 

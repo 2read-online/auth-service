@@ -1,3 +1,5 @@
+# pylint: disable=redefined-outer-name
+"""Test login processing"""
 import json
 import pytest
 
@@ -9,10 +11,12 @@ from tests.app.conftest import users
 
 @pytest.fixture
 def valid_request():
+    """Valid request"""
     return LoginRequest(email='atimin@gmail.com', password='pwd').json()
 
 
 def test__login_ok(client, valid_request):
+    """Should pass valid request and return access token"""
     users.find_one.return_value = {
         '_id': ObjectId(),
         'email': 'atimin@gmail.com',
@@ -27,6 +31,7 @@ def test__login_ok(client, valid_request):
 
 
 def test__login_bad_password(client, valid_request):
+    """Should return 401 if password mismatches"""
     users.find_one.return_value = {
         '_id': ObjectId(),
         'email': 'atimin@gmail.com',
@@ -39,6 +44,7 @@ def test__login_bad_password(client, valid_request):
 
 
 def test__login_no_user(client, valid_request):
+    """Should return 401 if the user is not found"""
     users.find_one.return_value = None
 
     resp = client.put('/auth/login', valid_request)
@@ -47,6 +53,7 @@ def test__login_no_user(client, valid_request):
 
 
 def test__login_invalid_request(client):
+    """Should return 422 and details if request is not valid"""
     users.find_one.return_value = None
 
     resp = client.put('/auth/login', json.dumps({'something': 'invalid'}))

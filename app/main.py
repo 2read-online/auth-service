@@ -1,3 +1,4 @@
+"""Web application"""
 import logging
 
 from fastapi import FastAPI, HTTPException, Depends
@@ -36,16 +37,26 @@ app.add_middleware(
 
 
 class Settings(BaseModel):
+    """Application settings
+    """
     authjwt_secret_key: str = "secret"
 
 
 @AuthJWT.load_config
 def get_config():
+    """Load settings
+    """
     return Settings()
 
 
 @app.exception_handler(AuthJWTException)
-def authjwt_exception_handler(request: Request, exc: AuthJWTException):
+def authjwt_exception_handler(_request: Request, exc: AuthJWTException):
+    """
+    JWT exception
+    :param _request:
+    :param exc:
+    :return:
+    """
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.message}
@@ -54,6 +65,8 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 @app.put("/auth/login")
 def login(req: LoginRequest, authorize: AuthJWT = Depends()):
+    """Process login request
+    """
     user_db = User.from_db(users.find_one({'email': req.email}))
     if user_db is None or user_db.hashed_password != hash_password(req.password):
         raise HTTPException(status_code=401, detail="Bad email or password")
@@ -64,6 +77,8 @@ def login(req: LoginRequest, authorize: AuthJWT = Depends()):
 
 @app.put("/auth/register")
 def register(req: RegisterRequest):
+    """Process user registration request
+    """
     user_db = users.find_one({'email': req.email})
     if user_db is not None:
         raise HTTPException(status_code=409, detail="User already exists")
@@ -75,5 +90,7 @@ def register(req: RegisterRequest):
 
 @app.get('/auth/logout')
 def user(authorize: AuthJWT = Depends()):
+    """Process logout request
+    """
     authorize.jwt_required()
     return {}

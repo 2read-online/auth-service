@@ -1,3 +1,4 @@
+"""Entry point"""
 import uvicorn
 from app.main import app
 
