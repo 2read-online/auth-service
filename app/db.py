@@ -1,11 +1,12 @@
+import logging
 import os
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
+from pymongo.errors import OperationFailure
 
-from app.encrypt import hash_password
-
+logger = logging.getLogger('db')
 
 def get_user_collection():
     mongo_db_server = os.getenv('MONGO_DB_SERVER', 'mongo')
@@ -13,11 +14,8 @@ def get_user_collection():
     db: Database = client.prod
     users: Collection = db.users
 
-    if users.count_documents({'email': 'atimin@gmail.com'}) == 0:
-        users.insert_one({
-            'email': "atimin@gmail.com",
-            'hashed_password': hash_password('pwd')
-        })
-
+    try:
         users.create_index('email', unique=True)
+    except OperationFailure as err:
+        logger.warning('Email index alread ycreated')
     return users
