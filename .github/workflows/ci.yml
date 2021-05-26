@@ -34,6 +34,6 @@ jobs:
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 600
       - name: Tag image
-        run: docker tag ${{github.repository}} registry.digitalocean.com/${{github.repository}}:latest
+        run: docker tag ${{github.repository}} registry.digitalocean.com/to-read-online/${{thub.event.repository.name}}:latest
       - name: Push image to DO Container Registry
-        run: docker push registry.digitalocean.com/${{github.repository}}:latest
+        run: docker push registry.digitalocean.com/to-read-online/${{github.event.repository.name}}:latest
