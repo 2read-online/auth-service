@@ -2,14 +2,13 @@
 import logging
 
 from fastapi import FastAPI, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
-from pydantic import BaseModel
 from pymongo.collection import Collection
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from app.config import CONFIG
 from app.db import get_user_collection, User
 from app.encrypt import hash_password
 from app.schemas import LoginRequest, RegisterRequest
@@ -20,33 +19,12 @@ users: Collection = get_user_collection()
 
 app = FastAPI()
 
-origins = [
-    "http://2read.online",
-    "https://2read.online",
-    "http://localhost",
-    "http://localhost:3000"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-class Settings(BaseModel):
-    """Application settings
-    """
-    authjwt_secret_key: str = "secret"
-
 
 @AuthJWT.load_config
 def get_config():
     """Load settings
     """
-    return Settings()
+    return CONFIG
 
 
 @app.exception_handler(AuthJWTException)

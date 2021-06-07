@@ -1,9 +1,8 @@
 """Module with encryption functions
 """
 import hashlib
-import os
 
-SALT = os.getenv('SALT', 'e17e55ff5000cd5afe17d507c03c337cb4c')
+from app.config import CONFIG
 
 
 def hash_password(password: str) -> str:
@@ -12,4 +11,4 @@ def hash_password(password: str) -> str:
     :param password:
     :return:
     """
-    return hashlib.sha256((SALT + password).encode()).hexdigest()
+    return hashlib.sha256((CONFIG.salt + password).encode()).hexdigest()

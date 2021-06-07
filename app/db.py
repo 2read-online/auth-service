@@ -1,7 +1,5 @@
 """Module for working with MongoDB"""
 import logging
-import os
-
 from datetime import datetime
 from typing import Optional
 
@@ -13,14 +11,14 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 from pymongo.errors import OperationFailure
 
+from app.config import CONFIG
+
 logger = logging.getLogger('db')
 
 
 def get_user_collection():
     """Get or setup user collection from MongoDB"""
-    mongo_db_server = os.getenv('MONGO_DB_SERVER', 'mongo')
-    client = MongoClient(f'mongodb://%s:%s@{mongo_db_server}:27017/'
-                         % ('root', 'e8520c749249e517e'))
+    client = MongoClient(CONFIG.mongodb_url)
     db: Database = client.prod
     users: Collection = db.users
 
