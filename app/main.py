@@ -49,7 +49,7 @@ def login(req: LoginRequest, authorize: AuthJWT = Depends()):
     if user_db is None or user_db.hashed_password != hash_password(req.password):
         raise HTTPException(status_code=401, detail="Bad email or password")
 
-    access_token = authorize.create_access_token(subject=req.email)
+    access_token = authorize.create_access_token(subject=str(user_db.id))
     return {"access_token": access_token}
 
 
