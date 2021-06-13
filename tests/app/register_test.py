@@ -20,7 +20,7 @@ def test__register_ok(client, valid_request):
     """Should register a user with valid data"""
     users.find_one.return_value = None
 
-    resp = client.put('/auth/register', valid_request)
+    resp = client.post('/auth/register', valid_request)
 
     users.find_one.assert_called_with({'email': 'test@test.com'})
     users.insert_one.assert_called_with({'email': 'test@test.com',
@@ -31,7 +31,7 @@ def test__register_ok(client, valid_request):
 def test__user_exists(client, valid_request):
     """Should return 409 if user already exists"""
     users.find_one.return_value = {}
-    resp = client.put('/auth/register', valid_request)
+    resp = client.post('/auth/register', valid_request)
 
     assert resp.status_code == 409
     assert json.loads(resp.content)['detail'] == 'User already exists'

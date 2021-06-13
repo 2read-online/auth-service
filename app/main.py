@@ -53,7 +53,7 @@ def login(req: LoginRequest, authorize: AuthJWT = Depends()):
     return {"access_token": access_token}
 
 
-@app.put("/auth/register")
+@app.post("/auth/register")
 def register(req: RegisterRequest):
     """Process user registration request
     """
