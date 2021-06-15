@@ -49,8 +49,21 @@ def login(req: LoginRequest, authorize: AuthJWT = Depends()):
     if user_db is None or user_db.hashed_password != hash_password(req.password):
         raise HTTPException(status_code=401, detail="Bad email or password")
 
-    access_token = authorize.create_access_token(subject=str(user_db.id))
-    return {"access_token": access_token}
+    user_id = str(user_db.id)
+    access_token = authorize.create_access_token(subject=user_id)
+    refresh_token = authorize.create_refresh_token(subject=user_id)
+    return {'access_token': access_token, 'refresh_token': refresh_token}
+
+
+@app.get('/auth/refresh')
+def refresh(authorize: AuthJWT = Depends()):
+    """Refresh access token
+    """
+    authorize.jwt_refresh_token_required()
+
+    user_id = authorize.get_jwt_subject()
+    new_access_token = authorize.create_access_token(subject=user_id)
+    return {'access_token': new_access_token}
 
 
 @app.post("/auth/register")
