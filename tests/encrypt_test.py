@@ -1,12 +1,12 @@
 """Test encryption module"""
-from app.encrypt import hash_password
+from app.encrypt import hash_with_salt
 
 
 def test__hash_password():
     """Should hash password with salt"""
-    hashed_password = hash_password('password')
+    hashed_password = hash_with_salt('password')
 
     assert hashed_password != 'password'
     assert len(hashed_password) == 64
-    assert hashed_password != hash_password('another_password')
-    assert hashed_password == hash_password('password')
+    assert hashed_password != hash_with_salt('another_password')
+    assert hashed_password == hash_with_salt('password')

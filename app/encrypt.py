@@ -5,10 +5,10 @@ import hashlib
 from app.config import CONFIG
 
 
-def hash_password(password: str) -> str:
+def hash_with_salt(string: str) -> str:
     """
     Hash password with salt
-    :param password:
+    :param string:
     :return:
     """
-    return hashlib.sha256((CONFIG.salt + password).encode()).hexdigest()
+    return hashlib.sha256((CONFIG.salt + string).encode()).hexdigest()

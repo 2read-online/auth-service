@@ -7,15 +7,20 @@ from fastapi_jwt_auth.exceptions import AuthJWTException
 from pymongo.collection import Collection
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from redis import Redis
+from cryptography.fernet import Fernet, InvalidToken
 
 from app.config import CONFIG
 from app.db import get_user_collection, User
-from app.encrypt import hash_password
-from app.schemas import LoginRequest, RegisterRequest
+from app.encrypt import hash_with_salt
+from app.schemas import LoginRequest
 
 logging.basicConfig(level='DEBUG')
+logger = logging.getLogger(__name__)
+fernet_key = Fernet.generate_key()
 
 users: Collection = get_user_collection()
+redis: Redis = Redis.from_url(CONFIG.redis_url)
 
 app = FastAPI()
 
@@ -42,12 +47,32 @@ def authjwt_exception_handler(_request: Request, exc: AuthJWTException):
 
 
 @app.put("/auth/login")
-def login(req: LoginRequest, authorize: AuthJWT = Depends()):
+def login(req: LoginRequest):
     """Process login request
     """
-    user_db = User.from_db(users.find_one({'email': req.email}))
-    if user_db is None or user_db.hashed_password != hash_password(req.password):
-        raise HTTPException(status_code=401, detail="Bad email or password")
+    f = Fernet(fernet_key)
+    redis.xadd('/auth/login',
+               dict(email=req.email, verification_hash=f.encrypt(bytes(req.email, 'utf-8'))),
+               maxlen=100)
+
+
+@app.get("/auth/verify/{verification_hash}")
+def verify(verification_hash: str, authorize: AuthJWT = Depends()):
+    """Verify email
+    """
+    f = Fernet(fernet_key)
+    try:
+        email = f.decrypt(bytes(verification_hash, 'ascii'), ttl=CONFIG.email_verification_ttl)
+        email = str(email, 'utf-8')
+    except InvalidToken as err:
+        logger.error('Failed to decrypt verification hash: %s', err)
+        raise HTTPException(status_code=400, detail="Bad or expired verification link")
+
+    user_db = User.from_db(users.find_one({'email': email}))
+    if user_db is None:
+        logger.info('Record a new user with email=%s', email)
+        user_db = User(email=email)
+        users.insert_one(user_db.db())
 
     user_id = str(user_db.id)
     access_token = authorize.create_access_token(subject=user_id)
@@ -64,19 +89,6 @@ def refresh(authorize: AuthJWT = Depends()):
     user_id = authorize.get_jwt_subject()
     new_access_token = authorize.create_access_token(subject=user_id)
     return {'access_token': new_access_token}
-
-
-@app.post("/auth/register")
-def register(req: RegisterRequest):
-    """Process user registration request
-    """
-    user_db = users.find_one({'email': req.email})
-    if user_db is not None:
-        raise HTTPException(status_code=409, detail="User already exists")
-
-    user_db = User(email=req.email, hashed_password=hash_password(req.password))
-    users.insert_one(user_db.dict(exclude_none=True))
-    return {}
 
 
 @app.get('/auth/logout')

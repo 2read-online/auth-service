@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from app.encrypt import hash_password
+from app.encrypt import hash_with_salt
 from app.schemas import RegisterRequest
 from tests.app.conftest import users
 
@@ -24,7 +24,7 @@ def test__register_ok(client, valid_request):
 
     users.find_one.assert_called_with({'email': 'test@test.com'})
     users.insert_one.assert_called_with({'email': 'test@test.com',
-                                         'hashed_password': hash_password('password12')})
+                                         'hashed_password': hash_with_salt('password12')})
     assert resp.status_code == 200
 
 

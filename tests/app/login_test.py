@@ -5,7 +5,7 @@ import json
 import pytest
 from bson import ObjectId
 
-from app.encrypt import hash_password
+from app.encrypt import hash_with_salt
 from app.schemas import LoginRequest
 from tests.app.conftest import users, get_subject
 
@@ -21,7 +21,7 @@ def test__login_ok(client, user_id, valid_request):
     users.find_one.return_value = {
         '_id': user_id,
         'email': 'atimin@gmail.com',
-        'hashed_password': hash_password('pwd')
+        'hashed_password': hash_with_salt('pwd')
     }
 
     resp = client.put('/auth/login', valid_request)
@@ -37,7 +37,7 @@ def test__login_bad_password(client, valid_request):
     users.find_one.return_value = {
         '_id': ObjectId(),
         'email': 'atimin@gmail.com',
-        'hashed_password': hash_password('bad_pwd')
+        'hashed_password': hash_with_salt('bad_pwd')
     }
 
     resp = client.put('/auth/login', valid_request)
