@@ -12,8 +12,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from app.config import CONFIG
 from app.db import get_user_collection, User
-from app.encrypt import hash_with_salt
-from app.schemas import LoginRequest
+from app.schemas import LoginRequest, VerificationRequest
 
 logging.basicConfig(level='DEBUG')
 logger = logging.getLogger(__name__)
@@ -56,13 +55,13 @@ def login(req: LoginRequest):
                maxlen=100)
 
 
-@app.get("/auth/verify/{verification_hash}")
-def verify(verification_hash: str, authorize: AuthJWT = Depends()):
+@app.post("/auth/verify")
+def verify(req: VerificationRequest, authorize: AuthJWT = Depends()):
     """Verify email
     """
     f = Fernet(fernet_key)
     try:
-        email = f.decrypt(bytes(verification_hash, 'ascii'), ttl=CONFIG.email_verification_ttl)
+        email = f.decrypt(bytes(req.verification_hash, 'ascii'), ttl=CONFIG.email_verification_ttl)
         email = str(email, 'utf-8')
     except InvalidToken as err:
         logger.error('Failed to decrypt verification hash: %s', err)
@@ -77,7 +76,7 @@ def verify(verification_hash: str, authorize: AuthJWT = Depends()):
     user_id = str(user_db.id)
     access_token = authorize.create_access_token(subject=user_id)
     refresh_token = authorize.create_refresh_token(subject=user_id)
-    return {'access_token': access_token, 'refresh_token': refresh_token}
+    return {'email': email, 'access_token': access_token, 'refresh_token': refresh_token}
 
 
 @app.get('/auth/refresh')
