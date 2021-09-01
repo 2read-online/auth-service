@@ -8,8 +8,16 @@ from bson import ObjectId
 from fastapi_jwt_auth import AuthJWT
 from pymongo.collection import Collection
 from starlette.testclient import TestClient
+from redis import Redis
 
 users = Mock(spec=Collection)
+
+
+@pytest.fixture(name='redis')
+def mock_redis(mocker):
+    mock = mocker.patch('app.redis.make_redis')
+    mock.return_value = Mock(spec=Redis)
+    return mock.return_value
 
 
 @pytest.fixture
@@ -20,7 +28,7 @@ def mock_users(mocker):
 
 
 @pytest.fixture
-def client(mock_users):
+def client(mock_users, redis):
     from app.main import app
     return TestClient(app)
 

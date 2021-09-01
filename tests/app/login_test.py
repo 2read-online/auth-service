@@ -3,55 +3,30 @@
 import json
 
 import pytest
-from bson import ObjectId
+from cryptography.fernet import Fernet
 
-from app.encrypt import hash_with_salt
+from app.config import CONFIG
 from app.schemas import LoginRequest
-from tests.app.conftest import users, get_subject
+from tests.app.conftest import users
 
 
 @pytest.fixture
 def valid_request():
     """Valid request"""
-    return LoginRequest(email='atimin@gmail.com', password='pwd').json()
+    return LoginRequest(email='atimin@gmail.com').json()
 
 
-def test__login_ok(client, user_id, valid_request):
+def test__login_ok(client, redis, valid_request):
     """Should pass valid request and return access token"""
-    users.find_one.return_value = {
-        '_id': user_id,
-        'email': 'atimin@gmail.com',
-        'hashed_password': hash_with_salt('pwd')
-    }
-
+    f = Fernet(CONFIG.fernet_key)
     resp = client.put('/auth/login', valid_request)
 
-    users.find_one.assert_called_with({'email': 'atimin@gmail.com'})
+    assert redis.xadd.call_args.args[0] == '/auth/login'
+    assert redis.xadd.call_args.args[1]['email'] == 'atimin@gmail.com'
+    assert f.decrypt(redis.xadd.call_args.args[1]['verification_hash']) == b'atimin@gmail.com'
     assert resp.status_code == 200
-    assert get_subject(resp.content, 'access_token') == str(user_id)
-    assert get_subject(resp.content, 'refresh_token') == str(user_id)
+    assert resp.content == b'{}'
 
-
-def test__login_bad_password(client, valid_request):
-    """Should return 401 if password mismatches"""
-    users.find_one.return_value = {
-        '_id': ObjectId(),
-        'email': 'atimin@gmail.com',
-        'hashed_password': hash_with_salt('bad_pwd')
-    }
-
-    resp = client.put('/auth/login', valid_request)
-    assert resp.status_code == 401
-    assert json.loads(resp.content)['detail'] == 'Bad email or password'
-
-
-def test__login_no_user(client, valid_request):
-    """Should return 401 if the user is not found"""
-    users.find_one.return_value = None
-
-    resp = client.put('/auth/login', valid_request)
-    assert resp.status_code == 401
-    assert json.loads(resp.content)['detail'] == 'Bad email or password'
 
 
 def test__login_invalid_request(client):
@@ -61,5 +36,4 @@ def test__login_invalid_request(client):
     resp = client.put('/auth/login', json.dumps({'something': 'invalid'}))
     assert resp.status_code == 422
     assert json.loads(resp.content)['detail'] == [
-        {"loc": ["body", "email"], "msg": "field required", "type": "value_error.missing"},
-        {"loc": ["body", "password"], "msg": "field required", "type": "value_error.missing"}]
+        {"loc": ["body", "email"], "msg": "field required", "type": "value_error.missing"}]

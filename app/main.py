@@ -7,19 +7,18 @@ from fastapi_jwt_auth.exceptions import AuthJWTException
 from pymongo.collection import Collection
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from redis import Redis
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.config import CONFIG
 from app.db import get_user_collection, User
+from app.redis import make_redis
 from app.schemas import LoginRequest, VerificationRequest
 
 logging.basicConfig(level='DEBUG')
 logger = logging.getLogger(__name__)
-fernet_key = Fernet.generate_key()
 
 users: Collection = get_user_collection()
-redis: Redis = Redis.from_url(CONFIG.redis_url)
+redis = make_redis(CONFIG.redis_url)
 
 app = FastAPI()
 
@@ -49,17 +48,18 @@ def authjwt_exception_handler(_request: Request, exc: AuthJWTException):
 def login(req: LoginRequest):
     """Process login request
     """
-    f = Fernet(fernet_key)
+    f = Fernet(CONFIG.fernet_key)
     redis.xadd('/auth/login',
                dict(email=req.email, verification_hash=f.encrypt(bytes(req.email, 'utf-8'))),
                maxlen=100)
+    return {}
 
 
 @app.post("/auth/verify")
 def verify(req: VerificationRequest, authorize: AuthJWT = Depends()):
     """Verify email
     """
-    f = Fernet(fernet_key)
+    f = Fernet(CONFIG.fernet_key)
     try:
         email = f.decrypt(bytes(req.verification_hash, 'ascii'), ttl=CONFIG.email_verification_ttl)
         email = str(email, 'utf-8')
