@@ -7,6 +7,6 @@ class LoginRequest(BaseModel):
     email: EmailStr = Field(description="EMail address")
 
 
-class VerificationRequest(BaseModel):
+class VerifyRequest(BaseModel):
     """Verification Request"""
     verification_hash: str

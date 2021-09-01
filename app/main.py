@@ -12,7 +12,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from app.config import CONFIG
 from app.db import get_user_collection, User
 from app.redis import make_redis
-from app.schemas import LoginRequest, VerificationRequest
+from app.schemas import LoginRequest, VerifyRequest
 
 logging.basicConfig(level='DEBUG')
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ def login(req: LoginRequest):
 
 
 @app.post("/auth/verify")
-def verify(req: VerificationRequest, authorize: AuthJWT = Depends()):
+def verify(req: VerifyRequest, authorize: AuthJWT = Depends()):
     """Verify email
     """
     f = Fernet(CONFIG.fernet_key)
@@ -71,7 +71,7 @@ def verify(req: VerificationRequest, authorize: AuthJWT = Depends()):
     if user_db is None:
         logger.info('Record a new user with email=%s', email)
         user_db = User(email=email)
-        users.insert_one(user_db.db())
+        user_db.id = users.insert_one(user_db.db())
 
     user_id = str(user_db.id)
     access_token = authorize.create_access_token(subject=user_id)

@@ -28,7 +28,6 @@ def test__login_ok(client, redis, valid_request):
     assert resp.content == b'{}'
 
 
-
 def test__login_invalid_request(client):
     """Should return 422 and details if request is not valid"""
     users.find_one.return_value = None
