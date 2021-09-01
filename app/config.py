@@ -13,7 +13,8 @@ class Config(BaseSettings):
         description="Redis URL")
     authjwt_secret_key: str = Field('secret', description='Secret key for JWT',
                                     alias='secret_key')
-    email_verification_ttl: int = Field(15 * 60, description='TTL for email verification (default 15 minutes)')
+    email_verification_ttl: int = Field(
+        15 * 60, description='TTL for email verification (default 15 minutes)')
     fernet_key: bytes = Field(Fernet.generate_key(), description='Key for verification hash')
 
 

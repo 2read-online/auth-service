@@ -1,11 +1,11 @@
 """Module for working with MongoDB"""
 import logging
-from pydantic import BaseModel, EmailStr
+
+from pydantic import EmailStr
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
 from pymongo.errors import OperationFailure
-
 from pydantic_mongo import MongoModel
 
 from app.config import CONFIG
@@ -26,7 +26,7 @@ def get_user_collection():
     return users
 
 
-class User(MongoModel):
+class User(MongoModel):  # pylint: disable=too-few-public-methods
     """User model
     """
     email: EmailStr

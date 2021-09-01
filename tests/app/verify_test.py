@@ -14,8 +14,8 @@ from tests.app.conftest import users, get_subject, get_detail
 @pytest.fixture
 def valid_request():
     """Valid request"""
-    f = Fernet(CONFIG.fernet_key)
-    return VerifyRequest(verification_hash=f.encrypt(b'atimin@gmail.com')).json()
+    fernet = Fernet(CONFIG.fernet_key)
+    return VerifyRequest(verification_hash=fernet.encrypt(b'atimin@gmail.com')).json()
 
 
 def test__verify_and_login_ok(client, user_id, valid_request):
@@ -49,12 +49,14 @@ def test__verify_create_and_login_ok(client, user_id, valid_request):
 
 
 def test__wrong_verification_hash(client):
+    """Should return 400 if hash is wrong"""
     resp = client.post('/auth/verify', VerifyRequest(verification_hash='XXXXXXX').json())
     assert resp.status_code == 400
     assert get_detail(resp.content) == 'Bad or expired verification link'
 
 
 def test__expired_verification_hash(client):
+    """Should return 400 if hash has expired"""
     expired_hash = Fernet(CONFIG.fernet_key) \
         .encrypt_at_time(b'atimin@gmail.com', int(time.time())
                          - (CONFIG.email_verification_ttl + 1))

@@ -48,9 +48,9 @@ def authjwt_exception_handler(_request: Request, exc: AuthJWTException):
 def login(req: LoginRequest):
     """Process login request
     """
-    f = Fernet(CONFIG.fernet_key)
+    fernet = Fernet(CONFIG.fernet_key)
     redis.xadd('/auth/login',
-               dict(email=req.email, verification_hash=f.encrypt(bytes(req.email, 'utf-8'))),
+               dict(email=req.email, verification_hash=fernet.encrypt(bytes(req.email, 'utf-8'))),
                maxlen=100)
     return {}
 
@@ -59,13 +59,14 @@ def login(req: LoginRequest):
 def verify(req: VerifyRequest, authorize: AuthJWT = Depends()):
     """Verify email
     """
-    f = Fernet(CONFIG.fernet_key)
+    fernet = Fernet(CONFIG.fernet_key)
     try:
-        email = f.decrypt(bytes(req.verification_hash, 'ascii'), ttl=CONFIG.email_verification_ttl)
+        email = fernet.decrypt(bytes(req.verification_hash, 'ascii'),
+                               ttl=CONFIG.email_verification_ttl)
         email = str(email, 'utf-8')
     except InvalidToken as err:
         logger.error('Failed to decrypt verification hash: %s', err)
-        raise HTTPException(status_code=400, detail="Bad or expired verification link")
+        raise HTTPException(status_code=400, detail="Bad or expired verification link") from err
 
     user_db = User.from_db(users.find_one({'email': email}))
     if user_db is None:

@@ -18,12 +18,12 @@ def valid_request():
 
 def test__login_ok(client, redis, valid_request):
     """Should pass valid request and return access token"""
-    f = Fernet(CONFIG.fernet_key)
+    fernet = Fernet(CONFIG.fernet_key)
     resp = client.put('/auth/login', valid_request)
 
     assert redis.xadd.call_args.args[0] == '/auth/login'
     assert redis.xadd.call_args.args[1]['email'] == 'atimin@gmail.com'
-    assert f.decrypt(redis.xadd.call_args.args[1]['verification_hash']) == b'atimin@gmail.com'
+    assert fernet.decrypt(redis.xadd.call_args.args[1]['verification_hash']) == b'atimin@gmail.com'
     assert resp.status_code == 200
     assert resp.content == b'{}'
 
