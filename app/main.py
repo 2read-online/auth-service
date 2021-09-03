@@ -11,7 +11,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from app.config import CONFIG
 from app.db import get_user_collection, User
-from app.redis import make_redis
+from app.make_redis import make_redis
 from app.schemas import LoginRequest, VerifyRequest
 
 logging.basicConfig(level='DEBUG')

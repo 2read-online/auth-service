@@ -15,7 +15,7 @@ users = Mock(spec=Collection)
 
 @pytest.fixture(name='redis')
 def mock_redis(mocker):
-    mock = mocker.patch('app.redis.make_redis')
+    mock = mocker.patch('app.make_redis.make_redis')
     mock.return_value = Mock(spec=Redis)
     return mock.return_value
 
