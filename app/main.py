@@ -72,7 +72,7 @@ def verify(req: VerifyRequest, authorize: AuthJWT = Depends()):
     if user_db is None:
         logger.info('Record a new user with email=%s', email)
         user_db = User(email=email)
-        user_id = str(users.insert_one(user_db.db()))
+        user_id = str(users.insert_one(user_db.db()).inserted_id)
     else:
         user_id = str(user_db.id)
 
