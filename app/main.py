@@ -72,9 +72,10 @@ def verify(req: VerifyRequest, authorize: AuthJWT = Depends()):
     if user_db is None:
         logger.info('Record a new user with email=%s', email)
         user_db = User(email=email)
-        user_db.id = users.insert_one(user_db.db())
+        user_id = str(users.insert_one(user_db.db()))
+    else:
+        user_id = str(user_db.id)
 
-    user_id = str(user_db.id)
     access_token = authorize.create_access_token(subject=user_id)
     refresh_token = authorize.create_refresh_token(subject=user_id)
     return {'email': email, 'access_token': access_token, 'refresh_token': refresh_token}
