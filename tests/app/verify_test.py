@@ -37,7 +37,7 @@ def test__verify_and_login_ok(client, user_id, valid_request):
 def test__verify_create_and_login_ok(client, user_id, valid_request):
     """Should create user if it doesnt exist"""
     users.find_one.return_value = None
-    users.insert_one.return_value = user_id
+    users.insert_one.return_value.inserted_id = user_id
 
     resp = client.post('/auth/verify', valid_request)
 
