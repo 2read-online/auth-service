@@ -76,6 +76,7 @@ def verify(req: VerifyRequest, authorize: AuthJWT = Depends()):
     else:
         user_id = str(user_db.id)
 
+    logger.info('Generate token for ID %s', user_id)
     access_token = authorize.create_access_token(subject=user_id)
     refresh_token = authorize.create_refresh_token(subject=user_id)
     return {'email': email, 'access_token': access_token, 'refresh_token': refresh_token}
